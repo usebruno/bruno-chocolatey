@@ -12,7 +12,7 @@ if (-not (Test-Path $toolsDir)) {
 }
 
 # Get the .exe file
-$exePath = Get-ChildItem ./dist -Filter *.exe | Select-Object -First 1
+$exePath = Get-ChildItem ./choco-repo/dist -Filter *.exe | Select-Object -First 1
 $checksum = Get-FileHash $exePath -Algorithm SHA256 | Select-Object -ExpandProperty Hash
 
 # Create chocolateyinstall.ps1
