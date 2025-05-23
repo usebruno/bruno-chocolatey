@@ -66,36 +66,6 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path ./tools
 
-      - name: Create VERIFICATION.txt
-        if: steps.check_update.outputs.update_needed == 'true'
-        shell: pwsh
-        run: |
-          $exePath = Get-ChildItem ./dist -Filter *.exe | Select-Object -First 1
-          $checksum = Get-FileHash $exePath -Algorithm SHA256 | Select-Object -ExpandProperty Hash
-          @"
-          VERIFICATION
-
-          Verification is intended to assist the Chocolatey moderators and community
-          in verifying that this package's contents are trustworthy.
-
-          Package can be verified like this:
-
-          1. Go to
-
-             x64: https://github.com/usebruno/bruno/releases/download/v${{ steps.release.outputs.version }}/$(Split-Path $exePath.Name -Leaf)
-
-             to download the installer.
-
-          2. You can use one of the following methods to obtain the SHA256 checksum:
-             - Use powershell function 'Get-FileHash'
-             - Use Chocolatey utility 'checksum.exe'
-
-             checksum64: $checksum
-
-          File 'license.md' is obtained from:
-             https://github.com/usebruno/bruno/blob/main/license.md
-          "@ | Out-File -FilePath ./tools/VERIFICATION.txt -Encoding UTF8
-
       - name: Create chocolateyinstall.ps1
         if: steps.check_update.outputs.update_needed == 'true'
         shell: pwsh
@@ -119,35 +89,6 @@ jobs:
 
           Install-ChocolateyPackage @packageArgs
           "@ | Out-File -FilePath ./tools/chocolateyInstall.ps1 -Encoding UTF8
-
-      - name: Create chocolateyBeforeModify.ps1
-        if: steps.check_update.outputs.update_needed == 'true'
-        shell: pwsh
-        run: |
-          @"
-          `$ErrorActionPreference = 'Stop'
-
-          `$packageName = 'bruno'
-          `$softwareName = 'Bruno*'
-
-          [array]`$key = Get-UninstallRegistryKey -SoftwareName `$softwareName
-
-          if (`$key.Count -eq 1) {
-            `$key | % {
-              `$installLocation = `$_.InstallLocation
-              if (`$installLocation) {
-                Write-Host "`$(`$packageName) will be removed from `$installLocation"
-              }
-            }
-          } elseif (`$key.Count -eq 0) {
-            Write-Warning "`$packageName has already been uninstalled by other means."
-          } elseif (`$key.Count -gt 1) {
-            Write-Warning "`$key.Count matches found!"
-            Write-Warning "To prevent accidental data loss, no programs will be uninstalled."
-            Write-Warning "Please alert package maintainer the following keys were matched:"
-            `$key | % {Write-Warning "- `$(`$_.DisplayName)`$(`$_.DisplayVersion)"}
-          }
-          "@ | Out-File -FilePath ./tools/chocolateyBeforeModify.ps1 -Encoding UTF8
 
       - name: Create chocolateyUninstall.ps1
         if: steps.check_update.outputs.update_needed == 'true'
@@ -202,14 +143,14 @@ jobs:
           Bruno is offline-only. There are no plans to add cloud-sync to Bruno, ever. We value your data privacy and believe it should stay on your device.
 
           ![screenshot](https://cdn.jsdelivr.net/gh/usebruno/bruno@main/assets/images/landing-2.png)]]></description>
-              <projectUrl>https://github.com/$env:TARGET_GH_REPO</projectUrl>
+              <projectUrl>https://www.usebruno.com</projectUrl>
               <tags>bruno api-client rest-client graphql-client foss</tags>
-              <copyright>usebruno</copyright>
+              <copyright>Copyright (c) $((Get-Date).Year) Bruno Software Inc.</copyright>
               <licenseUrl>https://github.com/$env:TARGET_GH_REPO/blob/main/license.md</licenseUrl>
               <requireLicenseAcceptance>false</requireLicenseAcceptance>
               <iconUrl>https://cdn.jsdelivr.net/gh/usebruno/bruno@main/assets/images/logo-transparent.png</iconUrl>
               <releaseNotes>https://github.com/$env:TARGET_GH_REPO/releases/tag/v${{ steps.release.outputs.version }}</releaseNotes>
-              <docsUrl>https://docs.usebruno.com/</docsUrl>
+              <docsUrl>https://docs.usebruno.com</docsUrl>
               <projectSourceUrl>https://github.com/$env:TARGET_GH_REPO</projectSourceUrl>
               <packageSourceUrl>https://github.com/usebruno/bruno-chocolatey</packageSourceUrl>
               <dependencies>
