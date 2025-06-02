@@ -49,14 +49,14 @@ Install-ChocolateyPackage @packageArgs
         Bruno stores your collections directly in a folder on your filesystem. We use a plain text markup language, Bru, to save information about API requests.
         You can use git or any version control of your choice to collaborate over your API collections.
         Bruno is offline-only. There are no plans to add cloud-sync to Bruno, ever. We value your data privacy and believe it should stay on your device.]]>
-        <projectUrl>https://github.com/$TargetRepo</projectUrl>
+        <projectUrl>https://www.usebruno.com</projectUrl>
         <tags>bruno api-client rest-client graphql-client foss</tags>
-        <copyright>usebruno</copyright>
+        <copyright>Copyright (c) $((Get-Date).Year) Bruno Software Inc.</copyright>
         <licenseUrl>https://github.com/$TargetRepo/blob/main/license.md</licenseUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <iconUrl>https://cdn.jsdelivr.net/gh/usebruno/bruno@main/assets/images/logo-transparent.png</iconUrl>
         <releaseNotes>https://github.com/$TargetRepo/releases/tag/v$Version</releaseNotes>
-        <docsUrl>https://docs.usebruno.com/</docsUrl>
+        <docsUrl>https://docs.usebruno.com</docsUrl>
         <projectSourceUrl>https://github.com/$TargetRepo</projectSourceUrl>
         <packageSourceUrl>https://github.com/usebruno/bruno-chocolatey</packageSourceUrl>
         <dependencies>

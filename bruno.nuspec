@@ -13,14 +13,14 @@ You can use git or any version control of your choice to collaborate over your A
 Bruno is offline-only. There are no plans to add cloud-sync to Bruno, ever. We value your data privacy and believe it should stay on your device.
 
 ![screenshot](https://cdn.jsdelivr.net/gh/usebruno/bruno@main/assets/images/landing-2.png)]]></description>
-    <projectUrl>https://github.com/usebruno/bruno</projectUrl>
+    <projectUrl>https://www.usebruno.com</projectUrl>
     <tags>bruno api-client rest-client graphql-client foss</tags>
-    <copyright>usebruno</copyright>
+    <copyright>Copyright (c) 2025 Bruno Software Inc.</copyright>
     <licenseUrl>https://github.com/usebruno/bruno/blob/main/license.md</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <iconUrl>https://cdn.jsdelivr.net/gh/usebruno/bruno@main/assets/images/logo-transparent.png</iconUrl>
     <releaseNotes>https://github.com/usebruno/bruno/releases/tag/v2.2.0</releaseNotes>
-    <docsUrl>https://docs.usebruno.com/</docsUrl>
+    <docsUrl>https://docs.usebruno.com</docsUrl>
     <projectSourceUrl>https://github.com/usebruno/bruno</projectSourceUrl>
     <packageSourceUrl>https://github.com/usebruno/bruno-chocolatey</packageSourceUrl>
     <dependencies>
