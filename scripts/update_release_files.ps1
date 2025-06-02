@@ -12,7 +12,18 @@ if (-not (Test-Path $toolsDir)) {
 }
 
 # Get the .exe file
-$exePath = Get-ChildItem ./choco-repo/dist -Filter *.exe | Select-Object -First 1
+if (-not (Test-Path "./choco-repo/dist")) {
+    Write-Error "choco-repo/dist directory not found. Make sure to download the .exe files first."
+    exit 1
+}
+
+$exeFiles = Get-ChildItem ./choco-repo/dist -Filter *.exe
+if ($exeFiles.Count -eq 0) {
+    Write-Error "No .exe files found in ./choco-repo/dist directory"
+    exit 1
+}
+
+$exePath = $exeFiles | Select-Object -First 1
 $checksum = Get-FileHash $exePath -Algorithm SHA256 | Select-Object -ExpandProperty Hash
 
 # Create chocolateyinstall.ps1
