@@ -1,0 +1,21 @@
+VERIFICATIONAdd commentMore actions
+
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+
+Package can be verified like this:
+
+1. Go to
+
+   x64: https://github.com/usebruno/bruno/releases/download/v2.3.0/bruno_2.3.0_x64_win.exe
+
+   to download the installer.
+
+2. You can use one of the following methods to obtain the SHA256 checksum:
+   - Use powershell function 'Get-FileHash'
+   - Use Chocolatey utility 'checksum.exe'
+
+   checksum64: 063AC5247C125B43F2B5FB4DB5154AE131548C69048EF451BB5188C4BB45AF5A
+
+File 'license.md' is obtained from:
+   https://github.com/usebruno/bruno/blob/main/license.md
