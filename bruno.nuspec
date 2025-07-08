@@ -31,3 +31,4 @@ Bruno is offline-only. There are no plans to add cloud-sync to Bruno, ever. We v
     <file src="tools\**" target="tools" />
   </files>
 </package>
+
