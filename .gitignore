@@ -1,0 +1,3 @@
+# Chocolatey package files
+*.nupkg
+*.nupkg.backup
