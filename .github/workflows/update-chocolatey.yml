@@ -92,6 +92,11 @@ jobs:
         name: chocolatey-package-${{ env.BRUNO_VERSION }}
         path: "*.nupkg"
 
+    - name: Clean up package files before PR
+      shell: pwsh
+      run: |
+        Remove-Item "*.nupkg" -Force -ErrorAction SilentlyContinue
+
     - name: Push to Chocolatey (Optional)
       if: github.event.inputs.push_to_chocolatey == 'true'
       shell: pwsh
