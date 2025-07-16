@@ -16,6 +16,9 @@ on:
 jobs:
   update-package:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
     - name: Checkout
