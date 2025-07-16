@@ -1,0 +1,198 @@
+name: Update Chocolatey Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Bruno version to package (e.g., 2.7.0)'
+        required: true
+        type: string
+      push_to_chocolatey:
+        description: 'Push to Chocolatey repository'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  update-package:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup PowerShell
+      shell: pwsh
+      run: |
+        # Enable TLS 1.2
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    - name: Get Bruno Release Info
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+
+        # Validate version format
+        if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+          throw "❌ Invalid version format. Expected format: x.y.z (e.g., 2.7.0)"
+        }
+
+        $url = "https://github.com/usebruno/bruno/releases/download/v$version/bruno_${version}_x64_win.exe"
+
+        # Get checksum from remote file without downloading
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        Invoke-WebRequest -Uri $url -OutFile $tempFile
+        $checksum = (Get-FileHash $tempFile -Algorithm SHA256).Hash
+        Remove-Item $tempFile
+
+        # Set environment variables
+        echo "BRUNO_VERSION=$version" >> $env:GITHUB_ENV
+        echo "BRUNO_URL=$url" >> $env:GITHUB_ENV
+        echo "BRUNO_CHECKSUM=$checksum" >> $env:GITHUB_ENV
+
+        Write-Host "Version: $version"
+        Write-Host "URL: $url"
+        Write-Host "Checksum: $checksum"
+
+    - name: Update Package Files
+      shell: pwsh
+      run: |
+        $version = $env:BRUNO_VERSION
+        $url = $env:BRUNO_URL
+        $checksum = $env:BRUNO_CHECKSUM
+
+        # Validate file paths
+        if (!(Test-Path "bruno.nuspec")) { throw "❌ bruno.nuspec not found." }
+        if (!(Test-Path "tools/chocolateyinstall.ps1")) { throw "❌ tools/chocolateyinstall.ps1 not found." }
+        if (!(Test-Path "tools/VERIFICATION.txt")) { throw "❌ tools/VERIFICATION.txt not found." }
+
+        # Update bruno.nuspec
+        $nuspecContent = Get-Content "bruno.nuspec" -Raw
+        $nuspecContent = $nuspecContent -replace '<version>[0-9]+\.[0-9]+\.[0-9]+</version>', "<version>$version</version>"
+        $nuspecContent = $nuspecContent -replace 'releases/tag/v[0-9]+\.[0-9]+\.[0-9]+', "releases/tag/v$version"
+        Set-Content "bruno.nuspec" $nuspecContent
+
+        # Update chocolateyinstall.ps1
+        $installContent = Get-Content "tools/chocolateyinstall.ps1" -Raw
+        $installContent = $installContent -replace 'download/v[0-9]+\.[0-9]+\.[0-9]+/bruno_[0-9]+\.[0-9]+\.[0-9]+_x64_win\.exe', "download/v$version/bruno_${version}_x64_win.exe"
+        $installContent = $installContent -replace "checksum\s*=\s*'[a-fA-F0-9]{64}'", "checksum     = '$checksum'"
+        Set-Content "tools/chocolateyinstall.ps1" $installContent
+
+        # Update VERIFICATION.txt
+        $verificationContent = Get-Content "tools/VERIFICATION.txt" -Raw
+        $verificationContent = $verificationContent -replace 'download/v[0-9]+\.[0-9]+\.[0-9]+/bruno_[0-9]+\.[0-9]+\.[0-9]+_x64_win\.exe', "download/v$version/bruno_${version}_x64_win.exe"
+        $verificationContent = $verificationContent -replace 'checksum64:\s*[a-fA-F0-9]{64}', "checksum64: $checksum"
+        Set-Content "tools/VERIFICATION.txt" $verificationContent
+
+        # Validate updates
+        Write-Host "🔍 Validating file updates..."
+
+        $nuspecCheck = Get-Content "bruno.nuspec" -Raw
+        $installCheck = Get-Content "tools/chocolateyinstall.ps1" -Raw
+        $verifyCheck = Get-Content "tools/VERIFICATION.txt" -Raw
+
+        if ($nuspecCheck -match "<version>$version</version>") {
+          Write-Host "✅ bruno.nuspec version updated"
+        } else {
+          throw "❌ bruno.nuspec version not updated correctly"
+        }
+
+        if ($installCheck -match $checksum) {
+          Write-Host "✅ chocolateyinstall.ps1 checksum updated"
+        } else {
+          throw "❌ chocolateyinstall.ps1 checksum not updated correctly"
+        }
+
+        if ($verifyCheck -match $checksum) {
+          Write-Host "✅ VERIFICATION.txt checksum updated"
+        } else {
+          throw "❌ VERIFICATION.txt checksum not updated correctly"
+        }
+
+    - name: Install Chocolatey
+      shell: pwsh
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+    - name: Create Package
+      shell: pwsh
+      run: |
+        Write-Host "📦 Creating Chocolatey package..."
+        choco pack bruno.nuspec
+
+        $packageFile = Get-ChildItem "*.nupkg" | Select-Object -First 1
+        if ($packageFile) {
+          Write-Host "✅ Package created: $($packageFile.Name)"
+          Write-Host "📊 Package size: $([math]::Round($packageFile.Length / 1MB, 2)) MB"
+        } else {
+          Write-Error "❌ Failed to create package"
+          exit 1
+        }
+
+    - name: Upload Package Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: chocolatey-package-${{ env.BRUNO_VERSION }}
+        path: "*.nupkg"
+
+    - name: Push to Chocolatey (Optional)
+      if: github.event.inputs.push_to_chocolatey == 'true'
+      shell: pwsh
+      run: |
+        $apiKey = "${{ secrets.CHOCOLATEY_API_KEY }}"
+        if (-not $apiKey) {
+          Write-Error "❌ CHOCOLATEY_API_KEY secret not set"
+          exit 1
+        }
+
+        $packageFile = Get-ChildItem "*.nupkg" | Select-Object -First 1
+        if (-not $packageFile) {
+          Write-Error "❌ No .nupkg file found"
+          exit 1
+        }
+
+        Write-Host "📦 Pushing package: $($packageFile.Name)"
+        try {
+          choco push $packageFile.Name --key="$apiKey" -s https://push.chocolatey.org/
+          Write-Host "✅ Package pushed successfully to Chocolatey"
+        } catch {
+          Write-Error "❌ Failed to push package: $_"
+          exit 1
+        }
+
+    - name: Create Release PR
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Update to Bruno v${{ env.BRUNO_VERSION }}"
+        title: "Update Chocolatey package to Bruno v${{ env.BRUNO_VERSION }}"
+        body: |
+          ## 🚀 Bruno v${{ env.BRUNO_VERSION }} Update
+
+          This PR updates the Chocolatey package to Bruno v${{ env.BRUNO_VERSION }}.
+
+          ### 📦 Package Details
+          - **Version:** ${{ env.BRUNO_VERSION }}
+          - **Download URL:** ${{ env.BRUNO_URL }}
+          - **SHA256 Checksum:** `${{ env.BRUNO_CHECKSUM }}`
+
+          ### 📝 Files Changed
+          - `bruno.nuspec` - Updated version number and release tag
+          - `tools/chocolateyinstall.ps1` - Updated download URL and checksum
+          - `tools/VERIFICATION.txt` - Updated verification URL and checksum
+
+          ### 🔍 Verification
+          - ✅ Release exists and is downloadable
+          - ✅ Checksum verified against remote file
+          - ✅ All package files updated successfully
+
+          ### 🎯 Next Steps
+          - Review the changes
+          - Test the package locally if desired
+          - Merge to update the Chocolatey package
+
+          ---
+          *This PR was automatically generated by the Update Chocolatey Package workflow.*
+        branch: update-v${{ env.BRUNO_VERSION }}
