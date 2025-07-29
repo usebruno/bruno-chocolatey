@@ -67,7 +67,6 @@ jobs:
         # Validate file paths
         if (!(Test-Path "bruno.nuspec")) { throw "❌ bruno.nuspec not found." }
         if (!(Test-Path "tools/chocolateyinstall.ps1")) { throw "❌ tools/chocolateyinstall.ps1 not found." }
-        if (!(Test-Path "tools/VERIFICATION.txt")) { throw "❌ tools/VERIFICATION.txt not found." }
 
         # Update bruno.nuspec
         $nuspecContent = Get-Content "bruno.nuspec" -Raw
@@ -81,18 +80,11 @@ jobs:
         $installContent = $installContent -replace "checksum\s*=\s*'[a-fA-F0-9]{64}'", "checksum     = '$checksum'"
         Set-Content "tools/chocolateyinstall.ps1" $installContent
 
-        # Update VERIFICATION.txt
-        $verificationContent = Get-Content "tools/VERIFICATION.txt" -Raw
-        $verificationContent = $verificationContent -replace 'download/v[0-9]+\.[0-9]+\.[0-9]+/bruno_[0-9]+\.[0-9]+\.[0-9]+_x64_win\.exe', "download/v$version/bruno_${version}_x64_win.exe"
-        $verificationContent = $verificationContent -replace 'checksum64:\s*[a-fA-F0-9]{64}', "checksum64: $checksum"
-        Set-Content "tools/VERIFICATION.txt" $verificationContent
-
         # Validate updates
         Write-Host "🔍 Validating file updates..."
 
         $nuspecCheck = Get-Content "bruno.nuspec" -Raw
         $installCheck = Get-Content "tools/chocolateyinstall.ps1" -Raw
-        $verifyCheck = Get-Content "tools/VERIFICATION.txt" -Raw
 
         if ($nuspecCheck -match "<version>$version</version>") {
           Write-Host "✅ bruno.nuspec version updated"
@@ -106,11 +98,6 @@ jobs:
           throw "❌ chocolateyinstall.ps1 checksum not updated correctly"
         }
 
-        if ($verifyCheck -match $checksum) {
-          Write-Host "✅ VERIFICATION.txt checksum updated"
-        } else {
-          throw "❌ VERIFICATION.txt checksum not updated correctly"
-        }
 
     - name: Install Chocolatey
       shell: pwsh
@@ -184,7 +171,6 @@ jobs:
           ### 📝 Files Changed
           - `bruno.nuspec` - Updated version number and release tag
           - `tools/chocolateyinstall.ps1` - Updated download URL and checksum
-          - `tools/VERIFICATION.txt` - Updated verification URL and checksum
 
           ### 🔍 Verification
           - ✅ Release exists and is downloadable
