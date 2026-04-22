@@ -1,18 +1,19 @@
 $ErrorActionPreference = 'Stop'
 $toolsDir = "$(Split-Path -Parent $MyInvocation.MyCommand.Definition)"
-$url = 'https://github.com/usebruno/bruno/releases/download/v3.2.0/bruno_3.2.0_x64_win.exe'
+$url = 'https://github.com/usebruno/bruno/releases/download/v3.3.0/bruno_3.3.0_x64_win.exe'
 
 $packageArgs = @{
   packageName  = '$env:ChocolateyPackageName'
   fileType     = 'exe'
   url          = $url
   softwareName = 'Bruno*'
-  checksum     = 'BB4C3D844E2059681D89081064EA8F939ABA811849A7A4859B00B6E932CA77B4'
+  checksum     = '8527C3EB08A6A6833955CC6FE98C22F937360675C23C8E6FF410AB00DE8A2FB4'
   checksumType = 'sha256'
   silentArgs   = '/S /allusers'
 }
 
 Install-ChocolateyPackage @packageArgs
+
 
 
 
